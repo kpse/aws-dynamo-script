@@ -7,7 +7,7 @@ const docClient = Promise.promisifyAll(new AWS.DynamoDB.DocumentClient({
 }));
 
 const params = {
-  TableName: "dev-louis-test-api-key3"
+  TableName: 'xxx-users'
 };
 
 docClient.scanAsync(params).then(res => {
