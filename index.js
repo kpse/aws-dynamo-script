@@ -1,20 +1,21 @@
 const AWS = require('aws-sdk')
-const Promise = require('bluebird')
 const _ = require('lodash')
 
-const docClient = Promise.promisifyAll(new AWS.DynamoDB.DocumentClient({
+const docClient = new AWS.DynamoDB.DocumentClient({
   region: 'ap-southeast-2'
-}));
+});
 
 const params = {
   TableName: 'xxx-users'
 };
 
-docClient.scanAsync(params).then(res => {
+docClient.scan(params).promise()
+.then(res => {
   const allItems = res.Items;
-  console.log("current: \n", JSON.stringify(allItems, null, 2))
-  _.each(allItems, i => docClient.putAsync(update(i)))
-});
+  console.log("item in all: \n", JSON.stringify(allItems, null, 2))
+  // _.each(allItems, i => docClient.putAsync(update(i)))
+})
+.catch(err => console.log('err', err))
 
 
 const update = (item) => {
@@ -25,3 +26,17 @@ const update = (item) => {
     })
   }
 }
+const withActive = (p, key) => _.assign({}, p, {
+  IndexName: 'dev_key-index',
+  KeyConditionExpression: 'dev_key = :key',
+  ExpressionAttributeValues: {
+    ':key': key
+  }
+})
+
+docClient.query(withActive(params, 'adas')).promise()
+.then(data => _.filter(data.Items, _.matches({active: true})))
+.then(res => {
+  console.log("found one: \n", JSON.stringify(_.get(res, '[0].name', 'default value'), null, 2))
+})
+.catch(err => console.log('have not found one : err is ', err))
